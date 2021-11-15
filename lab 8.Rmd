@@ -71,4 +71,87 @@ ggplot(data = homes_sub, aes(x = SqFt, y = Price)) +
   geom_point() +
   geom_smooth(method = lm)
 ```
+## Model the relationship with home price as DV (Dependent Variable)
 
+
+
+```{r}
+# Start with a saturated model (include every variable in this data set)
+
+homes_lm1 <- lm(Price ~ City + Bedrooms + Bathrooms + SqFt + PricePerSqFt + Status, data = homes_sub)
+
+# Make a subset that only contains the quantitative variables
+
+homes_quant <- homes_sub %>% 
+  select(Price:PricePerSqFt) # select columns price through pricepersqft
+
+homes_cor <- cor(homes_quant)
+homes_cor
+
+corrplot(homes_cor) #visual representation of correlations between variables
+
+homes_lm1
+
+# How would I explore the diagnostic plots?
+plot(homes_lm1)
+
+#run summary(homes_lm1) in console, get r squared value = 0.8457, this means that those variables can explain 84% of variance in home price (other variables we would need to capture 100% could be lot size, closeness to the ocean, etc. to get a higher value we would need additional variables that don't exist in our data set to explain 100.)
+
+# for homes_lm2, rsquared value is 0.5268. AIC, provide quantitiave measure for different permiatations of a model that provides us some information on model fit and complexity. ideal model has high fit and is simple. worst is poor fit high complexity. AIC gives us a way to compare these things
+
+```
+
+Try Another model (homes_lm2) where we simplify this a bit:
+-City
+-Sqft
+-Status
+
+```{r}
+homes_lm2 <- lm(Price ~ City + SqFt + Status, data = homes_sub)
+homes_lm2
+
+plot(homes_lm2)
+```
+
+Find the AIC value of each model:
+
+```{r}
+# low AIC is better fit, according to AIC homes_lm1 would be better BUT we conceptually have major issues with using LM1 so this is not all we should be thinking about. 
+
+AIC(homes_lm1)
+AIC(homes_lm2)
+```
+
+Try another permeation of this model that you think might make sense, check out and compare the model fit, outputs, and AIC value. 
+```{r}
+homes_lm3 <- lm(Price ~ SqFt + City + Status + Bedrooms, data = homes_sub)
+
+summary(homes_lm3)
+AIC(homes_lm3)
+```
+
+
+Use 'modelsummary' to show model outputs side-by-side:
+
+```{r}
+modelsummary(homes_lm1)
+
+```
+
+If you use modelsummary to return model outputs of multiple models, it wants you to geed it to it as a list.
+
+```{r}
+modelsummary(list(homes_lm1, homes_lm2, homes_lm3))
+```
+
+Which of these do i think makes sense? a model where regular sale homes have higher prices than forclosed homes, etc. 
+
+## Start making predictions with this model
+
+Use `broom::augment()`
+
+```{r}
+homes_predicted <- augment(homes_lm1)
+```
+
+Use the `predict()` function to try out your model on new scenarios that you create.
